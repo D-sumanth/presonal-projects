@@ -1,23 +1,67 @@
 let detailsModal;
 
+// Wait for DOM and Bootstrap to be loaded
 document.addEventListener("DOMContentLoaded", function () {
-  // Initialize the Bootstrap modal
-  detailsModal = new bootstrap.Modal(document.getElementById("detailsModal"));
+  console.log("DOM loaded, checking Bootstrap availability...");
 
-  loadEmployeeData();
+  // Check if Bootstrap is available
+  if (typeof bootstrap === "undefined") {
+    console.error("Bootstrap not loaded");
+    return;
+  }
 
-  document
-    .getElementById("searchForm")
-    .addEventListener("submit", function (e) {
+  // Initialize modal
+  const modalEl = document.getElementById("detailsModal");
+  if (modalEl) {
+    detailsModal = new bootstrap.Modal(modalEl);
+    console.log("Modal initialized successfully");
+  } else {
+    console.error("Modal element not found");
+    return;
+  }
+
+  // Setup search form handlers
+  const searchForm = document.getElementById("searchForm");
+  if (searchForm) {
+    searchForm.addEventListener("submit", function (e) {
       e.preventDefault();
-      loadEmployeeData(document.getElementById("searchName").value);
+      const searchTerm = document.getElementById("searchInput").value;
+      loadEmployeeData(searchTerm);
     });
+  }
 
-  document.getElementById("resetSearch").addEventListener("click", function () {
-    document.getElementById("searchName").value = "";
-    loadEmployeeData();
+  const resetButton = document.getElementById("resetSearch");
+  if (resetButton) {
+    resetButton.addEventListener("click", function () {
+      document.getElementById("searchInput").value = "";
+      loadEmployeeData();
+    });
+  }
+
+  // Setup view button click handlers
+  document.addEventListener("click", function (event) {
+    const button = event.target.closest(".btn-info");
+    if (button) {
+      const type = button.dataset.type;
+      const encodedData = button.dataset.info;
+      if (type && encodedData) {
+        showDetailsFromEncoded(type, encodedData);
+      }
+    }
   });
+
+  // Load initial data
+  loadEmployeeData();
 });
+
+function showDetailsFromEncoded(type, encodedData) {
+  try {
+    const data = JSON.parse(atob(encodedData));
+    showDetails(type, data);
+  } catch (error) {
+    console.error("Error parsing encoded data:", error);
+  }
+}
 
 async function loadEmployeeData(searchTerm = "") {
   try {
@@ -32,6 +76,8 @@ async function loadEmployeeData(searchTerm = "") {
     const data = await response.json();
 
     const tbody = document.getElementById("employeeData");
+    if (!tbody) return;
+
     tbody.innerHTML = "";
 
     if (data.length === 0) {
@@ -42,33 +88,42 @@ async function loadEmployeeData(searchTerm = "") {
 
     data.forEach((employee) => {
       const row = document.createElement("tr");
+      const encodedData = btoa(JSON.stringify(employee));
+
       row.innerHTML = `
                 <td>${escapeHtml(employee.full_name)}</td>
                 <td>${formatDate(employee.date_of_birth)}</td>
                 <td>${escapeHtml(employee.telephone)}</td>
                 <td>${escapeHtml(employee.ni_number)}</td>
-                <td><button class="btn btn-link" onclick="showDetails('bank', ${JSON.stringify(
-                  employee
-                )})">View</button></td>
-                <td><button class="btn btn-link" onclick="showDetails('emergency', ${JSON.stringify(
-                  employee
-                )})">View</button></td>
-                <td><button class="btn btn-link" onclick="showDetails('additional', ${JSON.stringify(
-                  employee
-                )})">View</button></td>
+                <td><button type="button" class="btn btn-info btn-sm" data-type="bank" data-info="${encodedData}">View</button></td>
+                <td><button type="button" class="btn btn-info btn-sm" data-type="emergency" data-info="${encodedData}">View</button></td>
+                <td><button type="button" class="btn btn-info btn-sm" data-type="additional" data-info="${encodedData}">View</button></td>
             `;
       tbody.appendChild(row);
     });
   } catch (error) {
     console.error("Error:", error);
-    document.getElementById("employeeData").innerHTML =
-      '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again later.</td></tr>';
+    const tbody = document.getElementById("employeeData");
+    if (tbody) {
+      tbody.innerHTML =
+        '<tr><td colspan="7" class="text-center text-danger">Error loading data</td></tr>';
+    }
   }
 }
 
 function showDetails(type, data) {
+  if (!detailsModal) {
+    console.error("Modal not initialized");
+    return;
+  }
+
   const modalTitle = document.querySelector("#detailsModal .modal-title");
   const modalBody = document.querySelector("#detailsModal .modal-body");
+
+  if (!modalTitle || !modalBody) {
+    console.error("Modal elements not found");
+    return;
+  }
 
   switch (type) {
     case "bank":
@@ -109,11 +164,17 @@ function showDetails(type, data) {
 }
 
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString();
+  if (!dateString) return "";
+  try {
+    return new Date(dateString).toLocaleDateString();
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return dateString;
+  }
 }
 
 function escapeHtml(unsafe) {
-  if (!unsafe) return "";
+  if (unsafe == null) return "";
   return unsafe
     .toString()
     .replace(/&/g, "&amp;")
