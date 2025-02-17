@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Employee Onboarding Form</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <form id="onboardingForm" class="onboarding-form">
+        <h1>Employee Onboarding Form</h1>
+
+        <!-- Personal Information -->
+        <div class="form-section" id="section1">
+          <h2>Personal Information</h2>
+          <div class="form-group">
+            <label for="fullName">Full Name *</label>
+            <input type="text" id="fullName" name="fullName" required />
+          </div>
+          <div class="form-group">
+            <label for="postalAddress">Postal Address *</label>
+            <textarea
+              id="postalAddress"
+              name="postalAddress"
+              required
+            ></textarea>
+          </div>
+          <div class="form-group">
+            <label for="dateOfBirth">Date of Birth *</label>
+            <input type="date" id="dateOfBirth" name="dateOfBirth" required />
+          </div>
+          <div class="form-group">
+            <label for="telephone">Telephone Number *</label>
+            <input type="tel" id="telephone" name="telephone" required />
+          </div>
+          <div class="form-group">
+            <label for="ninumber">National Insurance Number *</label>
+            <input type="text" id="ninumber" name="ninumber" required />
+          </div>
+        </div>
+
+        <!-- Bank Information -->
+        <div class="form-section" id="section2">
+          <h2>Bank Details</h2>
+          <div class="form-group">
+            <label for="bankName">Bank Name *</label>
+            <input type="text" id="bankName" name="bankName" required />
+          </div>
+          <div class="form-group">
+            <label for="sortCode">Sort Code *</label>
+            <input type="text" id="sortCode" name="sortCode" required />
+          </div>
+          <div class="form-group">
+            <label for="accountNumber">Account Number *</label>
+            <input
+              type="text"
+              id="accountNumber"
+              name="accountNumber"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="form-section" id="section3">
+          <h2>Emergency Contact</h2>
+          <div class="form-group">
+            <label for="emergencyName">Emergency Contact Name *</label>
+            <input
+              type="text"
+              id="emergencyName"
+              name="emergencyName"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="emergencyNumber">Emergency Contact Number *</label>
+            <input
+              type="tel"
+              id="emergencyNumber"
+              name="emergencyNumber"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="form-section" id="section4">
+          <h2>Additional Information</h2>
+          <div class="form-group">
+            <label for="healthIssues">Health or Medical Issues *</label>
+            <textarea id="healthIssues" name="healthIssues" required></textarea>
+          </div>
+          <div class="form-group">
+            <label for="additionalInfo">Other Information (Optional)</label>
+            <textarea id="additionalInfo" name="additionalInfo"></textarea>
+          </div>
+        </div>
+
+        <div class="form-navigation">
+          <button type="submit" class="submit-btn">Submit Form</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+      <div class="modal-content">
+        <h2>Success!</h2>
+        <p>Your form has been submitted successfully.</p>
+        <button onclick="closeModal()" class="close-modal">Close</button>
+      </div>
+    </div>
+
+    <!-- Add this after your form's closing tag in index.html -->
+    <div class="admin-section" style="margin-top: 20px; text-align: center">
+      <button
+        onclick="window.location.href='/submissions.html'"
+        class="view-submissions-btn"
+      >
+        View All Submissions
+      </button>
+    </div>
+
+    <script src="script.js"></script>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("onboardingForm");
+        const modal = document.getElementById("successModal");
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          // Add animation to form submission
+          form.style.opacity = "0.5";
+          form.style.transform = "scale(0.98)";
+          form.style.transition = "all 0.3s ease";
+
+          // Simulate form submission (replace with actual submission logic)
+          setTimeout(() => {
+            modal.style.display = "flex";
+            form.style.opacity = "1";
+            form.style.transform = "scale(1)";
+          }, 1000);
+        });
+      });
+
+      function closeModal() {
+        const modal = document.getElementById("successModal");
+        modal.style.display = "none";
+        document.getElementById("onboardingForm").reset();
+      }
+
+      // Add smooth section transitions
+      document.querySelectorAll(".form-section").forEach((section) => {
+        section.style.opacity = "0";
+        section.style.transform = "translateY(20px)";
+      });
+
+      // Animate sections as they come into view
+      const observerOptions = {
+        threshold: 0.2,
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.transition = "all 0.5s ease";
+            entry.target.style.opacity = "1";
+            entry.target.style.transform = "translateY(0)";
+          }
+        });
+      }, observerOptions);
+
+      document.querySelectorAll(".form-section").forEach((section) => {
+        observer.observe(section);
+      });
+    </script>
+    <script>
+      // Add this to your existing script.js
+      document
+        .getElementById("onboardingForm")
+        .addEventListener("submit", async function (e) {
+          e.preventDefault();
+
+          try {
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            const response = await fetch("/api/submit", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+              document.getElementById("successModal").style.display = "flex";
+              this.reset();
+            } else {
+              alert("Error submitting form: " + result.error);
+            }
+          } catch (error) {
+            console.error("Error:", error);
+            alert("Error submitting form");
+          }
+        });
+    </script>
+  </body>
+</html>
