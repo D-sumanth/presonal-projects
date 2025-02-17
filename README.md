@@ -374,5 +374,3 @@ Your Name - @D-sumanth - sumanthdev03@gmail.com
 Project Link: https://github.com/yourusername/employee-onboarding
 
 * * * * *
-
-⌨️ with ❤️ by Your Name
